@@ -1,3 +1,9 @@
+<h1 align="center">💻✨ InvoicePro</h1>
+
+<p align="center">
+  <b>Smart Invoice Generator • Fast • Clean • Professional</b>
+</p>
+
 <p align="center">
   <img src="https://readme-typing-svg.herokuapp.com?size=32&duration=3000&color=00C2FF&center=true&vCenter=true&width=700&lines=InvoicePro;Generate+Invoices+in+Seconds;Clean+UI+%2B+Powerful+Logic" />
 </p>
@@ -14,10 +20,6 @@
 
 ## 🚀 About the Project
 
-<p align="center">
-  <img src="https://via.placeholder.com/900x400?text=InvoicePro+Preview" alt="InvoicePro Preview" />
-</p>
-
 **InvoicePro** is a modern invoice generator that helps you create professional invoices in seconds — with automatic calculations for totals, discounts, and taxes, all wrapped in a clean and intuitive UI.
 
 <p align="center">
@@ -30,10 +32,21 @@
 
 ## 🎥 Preview
 
-<p align="center">
-  <img src="https://via.placeholder.com/900x500?text=Demo+GIF" alt="Demo GIF" />
-</p>
 
+<table align="center">
+  <tr>
+    <td><img src="Assets/Screenshots/Items.png" alt="Items" width="400"/></td>
+    <td><img src="Assets/Screenshots/Design.png" alt="Design" width="400"/></td>
+  </tr>
+  <tr>
+    <td><img src="Assets/Screenshots/Taxes.png" alt="Taxes" width="400"/></td>
+    <td><img src="Assets/Screenshots/Extra.png" alt="Extra" width="400"/></td>
+  </tr>
+  <tr>
+    <td><img src="Assets/Screenshots/QR.png" alt="QR" width="400"/></td>
+    <td><img src="Assets/Screenshots/Details.png" alt="Details" width="400"/></td>
+  </tr>
+</table>
 ---
 
 ## ✨ Features
@@ -73,8 +86,6 @@ Download as PDF → Ready to Send
 ```text
 InvoicePro/
 │── index.html       # Main UI
-│── style.css        # Styling
-│── script.js        # Logic
 │── assets/          # Images & icons
 ```
 ---
