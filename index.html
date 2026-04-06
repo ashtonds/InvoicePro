@@ -89,7 +89,7 @@ body {
 /* ══ LAYOUT ══ */
 .workspace {
   display: grid;
-  grid-template-columns: 440px 1fr;
+  grid-template-columns: 600px 1fr;
   flex: 1;
   overflow: hidden;
 }
@@ -733,6 +733,73 @@ input[type="color"] { padding: 4px 6px; height: 36px; cursor: pointer; }
   z-index: 99;
 }
 
+/* ══ INVOICE FORMAT BUILDER ══ */
+.fmt-chip {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  padding: 4px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--accent);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.fmt-chip:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+.fmt-preset {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text2);
+  cursor: pointer;
+  margin: 2px 3px 2px 0;
+  transition: all .15s;
+}
+.fmt-preset:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ══ UPI SECTION ══ */
+.upi-mode-btn {
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text3);
+  cursor: pointer;
+  transition: all .15s;
+  flex: 1;
+}
+.upi-mode-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+.app-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.app-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(240,180,41,.06); }
+
+/* ══ INVOICE QR LABEL IN PREVIEW ══ */
+.inv-qr-label { font-size: 9px; color: #888; font-family: var(--font-head); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 5px; }
+
 @media print {
   .topnav, .tab-bar, .panel-left, .preview-top { display: none !important; }
   .workspace { grid-template-columns: 1fr; }
@@ -801,9 +868,48 @@ input[type="color"] { padding: 4px 6px; height: 36px; cursor: pointer; }
     <!-- Invoice Meta -->
     <div class="section">
       <div class="sec-head">Invoice Details</div>
-      <div class="row3">
-        <div class="field"><label>Invoice #</label>
-          <input type="text" id="invNum" readonly></div>
+
+      <!-- Invoice Number Format Builder -->
+      <div class="field">
+        <label>Invoice Number Format</label>
+        <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+          <button class="fmt-chip" onclick="insertFmt('{YEAR}')">YEAR</button>
+          <button class="fmt-chip" onclick="insertFmt('{YY}')">YY</button>
+          <button class="fmt-chip" onclick="insertFmt('{MM}')">MM</button>
+          <button class="fmt-chip" onclick="insertFmt('{NUM}')">NUM</button>
+          <button class="fmt-chip" onclick="insertFmt('INV')">INV</button>
+          <button class="fmt-chip" onclick="insertFmt('/')">  /  </button>
+          <button class="fmt-chip" onclick="insertFmt('-')">  -  </button>
+        </div>
+        <input type="text" id="invFmt" value="{YEAR}-INV-{NUM}" placeholder="{YEAR}-INV-{NUM}" oninput="refreshInvNum()">
+        <div style="margin-top:5px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-family:var(--font-head);font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase">Preview →</span>
+          <span id="invNumPreview" style="font-family:var(--font-head);font-weight:700;font-size:13px;color:var(--accent);letter-spacing:.04em"></span>
+        </div>
+      </div>
+      <div class="row2" style="margin-bottom:6px">
+        <div class="field"><label>Counter (NUM)</label>
+          <input type="number" id="invCounter" value="1" min="1" oninput="refreshInvNum()"></div>
+        <div class="field"><label>Pad zeros</label>
+          <select id="invPad" onchange="refreshInvNum()">
+            <option value="1">None (1)</option>
+            <option value="2">2 digits (01)</option>
+            <option value="3" selected>3 digits (001)</option>
+            <option value="4">4 digits (0001)</option>
+          </select></div>
+      </div>
+      <div style="margin-bottom:4px">
+        <span style="font-family:var(--font-head);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Quick formats: </span>
+        <button class="fmt-preset" onclick="applyFmtPreset('{YEAR}-INV-{NUM}')">2026-INV-001</button>
+        <button class="fmt-preset" onclick="applyFmtPreset('INV/{YY}-{MM}/{NUM}')">INV/26-04/001</button>
+        <button class="fmt-preset" onclick="applyFmtPreset('{PREFIX}/{YEAR}-{YY}/{NUM}')">ACM/26-27/001</button>
+      </div>
+      <div class="field" id="prefixField" style="display:none">
+        <label>Prefix (e.g. ACM)</label>
+        <input type="text" id="invPrefix" placeholder="ACM" oninput="refreshInvNum()">
+      </div>
+
+      <div class="row3" style="margin-top:10px">
         <div class="field"><label>Currency</label>
           <select id="currency" onchange="upd()">
             <option value="₹">₹ INR</option>
@@ -820,6 +926,8 @@ input[type="color"] { padding: 4px 6px; height: 36px; cursor: pointer; }
             <option value="paid">Paid</option>
             <option value="partial">Partial</option>
           </select></div>
+        <div class="field"><label>Invoice #</label>
+          <input type="text" id="invNum" readonly style="font-size:11px"></div>
       </div>
       <div class="row2">
         <div class="field"><label>Invoice Date</label>
@@ -885,22 +993,45 @@ input[type="color"] { padding: 4px 6px; height: 36px; cursor: pointer; }
     <!-- Line Items -->
     <div class="section">
       <div class="sec-head">Line Items</div>
-      <div class="items-wrap">
-        <table class="items-tbl">
-          <thead>
-            <tr>
-              <th style="min-width:120px">Description</th>
-              <th style="width:52px">Qty</th>
-              <th style="width:60px">Unit</th>
-              <th style="width:74px">Price</th>
-              <th style="width:90px">Discount</th>
-              <th style="width:28px"></th>
-            </tr>
-          </thead>
-          <tbody id="itemsBody"></tbody>
-        </table>
-      </div>
+      <table class="items-tbl">
+        <thead>
+          <tr>
+            <th style="min-width:160px">Description</th>
+            <th style="width:58px">Qty</th>
+            <th style="width:70px">Unit</th>
+            <th style="width:90px">Price</th>
+            <th style="width:140px">Discount</th>
+            <th style="width:32px"></th>
+          </tr>
+        </thead>
+        <tbody id="itemsBody"></tbody>
+      </table>
       <button class="btn btn-ghost btn-full btn-sm" onclick="addRow()" style="margin-top:8px">+ Add Item</button>
+    </div>
+
+    <!-- Overall Discount -->
+    <div class="section">
+      <div class="sec-head">Overall Discount</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end">
+        <div class="field">
+          <label>Discount %</label>
+          <div style="position:relative">
+            <input type="number" id="overallDiscPct" min="0" max="100" step="0.01" placeholder="0" value="0" oninput="syncOverallDisc('pct')">
+            <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none">%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Discount Amount</label>
+          <div style="position:relative">
+            <input type="number" id="overallDiscAmt" min="0" step="0.01" placeholder="0.00" value="0" oninput="syncOverallDisc('amt')">
+            <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none" id="overallDiscCur">₹</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:6px;padding:8px 12px;background:var(--input-bg);border-radius:7px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:var(--font-head);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">Discount Applied</span>
+        <span id="overallDiscDisplay" style="font-family:var(--font-head);font-weight:700;color:var(--accent);font-size:14px">₹0.00</span>
+      </div>
     </div>
   </div>
 
@@ -1021,15 +1152,85 @@ input[type="color"] { padding: 4px 6px; height: 36px; cursor: pointer; }
         <input type="text" id="sigName" placeholder="Authorized Signatory" value="Authorized Signatory" oninput="upd()"></div>
     </div>
 
-    <!-- QR -->
+    <!-- UPI Payment QR -->
     <div class="section">
-      <div class="sec-head">QR Code</div>
-      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;margin-bottom:8px">
-        <input type="checkbox" id="showQRCheck" onchange="upd()" style="width:auto;margin:0">
-        Show QR code on invoice
-      </label>
-      <div class="field"><label>QR Content (UPI / URL / custom)</label>
-        <input type="text" id="qrContent" placeholder="upi://pay?pa=yourname@upi&pn=YourName" oninput="upd()">
+      <div class="sec-head">UPI Payment QR</div>
+
+      <!-- Mode toggle -->
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <button class="upi-mode-btn active" id="modeUPI" onclick="setUPIMode('upi')">⚡ UPI Deep Link</button>
+        <button class="upi-mode-btn" id="modeCustom" onclick="setUPIMode('custom')">✎ Custom / URL</button>
+      </div>
+
+      <!-- UPI fields -->
+      <div id="upiFields">
+        <div class="row2">
+          <div class="field"><label>UPI ID</label>
+            <input type="text" id="upiID" placeholder="yourname@upi" oninput="buildUPILink()"></div>
+          <div class="field"><label>Payee Name</label>
+            <input type="text" id="upiName" placeholder="Your Business" oninput="buildUPILink()"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Amount</label>
+            <div style="position:relative">
+              <input type="number" id="upiAmt" placeholder="Auto from total" min="0" step="0.01" oninput="buildUPILink()">
+              <button onclick="autoFillUPIAmt()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:var(--accent);color:#000;border:none;border-radius:4px;font-size:9px;font-weight:700;font-family:var(--font-head);padding:2px 6px;cursor:pointer;letter-spacing:.05em">AUTO</button>
+            </div>
+          </div>
+          <div class="field"><label>Transaction Note</label>
+            <input type="text" id="upiNote" placeholder="Invoice payment" oninput="buildUPILink()"></div>
+        </div>
+
+        <!-- App shortcuts -->
+        <div style="margin-bottom:10px">
+          <div style="font-family:var(--font-head);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Open directly in app</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="app-btn" onclick="openUPIApp('gpay')">
+              <span style="font-size:15px">G</span> GPay
+            </button>
+            <button class="app-btn" onclick="openUPIApp('phonepe')">
+              <span style="font-size:15px">₱</span> PhonePe
+            </button>
+            <button class="app-btn" onclick="openUPIApp('paytm')">
+              <span style="font-size:15px">P</span> Paytm
+            </button>
+            <button class="app-btn" onclick="openUPIApp('bhim')">
+              <span style="font-size:15px">B</span> BHIM
+            </button>
+          </div>
+        </div>
+
+        <!-- Generated link preview -->
+        <div style="background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px">
+          <div style="font-family:var(--font-head);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Generated UPI Link</div>
+          <div id="upiLinkDisplay" style="font-size:11px;color:var(--text2);word-break:break-all;line-height:1.5">Fill UPI ID above to generate</div>
+        </div>
+      </div>
+
+      <!-- Custom QR fields -->
+      <div id="customQRFields" style="display:none">
+        <div class="field"><label>Custom QR Content (URL / text)</label>
+          <input type="text" id="qrContent" placeholder="https://yourwebsite.com" oninput="upd()">
+        </div>
+      </div>
+
+      <!-- QR display options -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer">
+          <input type="checkbox" id="showQRCheck" onchange="upd()" style="width:auto;margin:0">
+          Show QR on invoice
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer">
+          <input type="checkbox" id="showQRLabel" onchange="upd()" style="width:auto;margin:0" checked>
+          Show "Scan to Pay" label
+        </label>
+      </div>
+
+      <!-- Live QR preview -->
+      <div style="background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+        <div style="font-family:var(--font-head);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">QR Preview</div>
+        <div id="qrSidePreview" style="display:inline-block;background:white;padding:8px;border-radius:8px"></div>
+        <div id="qrSideEmpty" style="font-size:12px;color:var(--text3);padding:10px 0">Enter UPI ID to generate QR</div>
       </div>
     </div>
 
@@ -1128,7 +1329,10 @@ input[type="color"] { padding: 4px 6px; height: 36px; cursor: pointer; }
 
     <div class="inv-footer">
       <div class="inv-footer-text">Thank you for your business!</div>
-      <div class="inv-qr" id="pQRWrap"><div id="pQR"></div></div>
+      <div class="inv-qr" id="pQRWrap" style="text-align:center">
+        <div id="pQR"></div>
+        <div class="inv-qr-label" id="pQRLabel">Scan to Pay</div>
+      </div>
     </div>
 
   </div><!-- end invoicePreview -->
@@ -1165,13 +1369,142 @@ let state = {
 };
 
 // ════════════════════════════════════════════
+// INVOICE NUMBER FORMAT BUILDER
+// ════════════════════════════════════════════
+function refreshInvNum() {
+  const fmt    = document.getElementById('invFmt').value || '{YEAR}-INV-{NUM}';
+  const cnt    = parseInt(document.getElementById('invCounter').value) || 1;
+  const pad    = parseInt(document.getElementById('invPad').value) || 3;
+  const prefix = (document.getElementById('invPrefix')?.value || '').trim();
+  const now    = new Date();
+  const year   = now.getFullYear();
+  const yy     = String(year).slice(-2);
+  const nextYY = String(year + 1).slice(-2);
+  const mm     = String(now.getMonth() + 1).padStart(2, '0');
+  const num    = String(cnt).padStart(pad, '0');
+
+  let result = fmt
+    .replace(/\{YEAR\}/g, year)
+    .replace(/\{YY\}/g, yy + '-' + nextYY)  // e.g. 26-27
+    .replace(/\{MM\}/g, mm)
+    .replace(/\{NUM\}/g, num)
+    .replace(/\{PREFIX\}/g, prefix || 'ACM');
+
+  // Show prefix field only if format uses it
+  const prefixField = document.getElementById('prefixField');
+  if (prefixField) prefixField.style.display = fmt.includes('{PREFIX}') ? 'block' : 'none';
+
+  document.getElementById('invNum').value = result;
+  const preview = document.getElementById('invNumPreview');
+  if (preview) preview.textContent = result;
+  upd();
+}
+
+function insertFmt(token) {
+  const inp = document.getElementById('invFmt');
+  const start = inp.selectionStart;
+  const end   = inp.selectionEnd;
+  const val   = inp.value;
+  inp.value = val.slice(0, start) + token + val.slice(end);
+  inp.selectionStart = inp.selectionEnd = start + token.length;
+  inp.focus();
+  refreshInvNum();
+}
+
+function applyFmtPreset(fmt) {
+  document.getElementById('invFmt').value = fmt;
+  refreshInvNum();
+}
+
+// ════════════════════════════════════════════
+// UPI DEEP LINK & QR
+// ════════════════════════════════════════════
+let upiMode = 'upi';
+
+function setUPIMode(mode) {
+  upiMode = mode;
+  document.getElementById('upiFields').style.display      = mode === 'upi'    ? 'block' : 'none';
+  document.getElementById('customQRFields').style.display = mode === 'custom' ? 'block' : 'none';
+  document.getElementById('modeUPI').classList.toggle('active', mode === 'upi');
+  document.getElementById('modeCustom').classList.toggle('active', mode === 'custom');
+  upd();
+}
+
+function buildUPILink() {
+  const pa   = document.getElementById('upiID').value.trim();
+  const pn   = encodeURIComponent(document.getElementById('upiName').value.trim() || 'Payee');
+  const amt  = document.getElementById('upiAmt').value.trim();
+  const tn   = encodeURIComponent(document.getElementById('upiNote').value.trim() || 'Invoice Payment');
+  const linkDisplay = document.getElementById('upiLinkDisplay');
+
+  if (!pa) {
+    linkDisplay.textContent = 'Fill UPI ID above to generate';
+    document.getElementById('qrSidePreview').innerHTML = '';
+    document.getElementById('qrSideEmpty').style.display = 'block';
+    upd(); return;
+  }
+
+  let link = `upi://pay?pa=${pa}&pn=${pn}&tn=${tn}&cu=INR`;
+  if (amt) link += `&am=${amt}`;
+
+  linkDisplay.textContent = link;
+  document.getElementById('qrContent').value = link;
+
+  // Side preview QR
+  const wrap = document.getElementById('qrSidePreview');
+  wrap.innerHTML = '';
+  document.getElementById('qrSideEmpty').style.display = 'none';
+  try {
+    new QRCode(wrap, { text: link, width: 100, height: 100, correctLevel: QRCode.CorrectLevel.M });
+  } catch(e) {}
+
+  upd();
+}
+
+function autoFillUPIAmt() {
+  // Calculate current grand total from preview
+  const grandEl = document.getElementById('pGrand');
+  if (grandEl) {
+    const raw = grandEl.textContent.replace(/[^0-9.]/g, '');
+    if (raw) { document.getElementById('upiAmt').value = raw; buildUPILink(); }
+  }
+}
+
+function openUPIApp(app) {
+  const pa  = document.getElementById('upiID').value.trim();
+  const pn  = encodeURIComponent(document.getElementById('upiName').value.trim() || 'Payee');
+  const amt = document.getElementById('upiAmt').value.trim();
+  const tn  = encodeURIComponent(document.getElementById('upiNote').value.trim() || 'Invoice Payment');
+
+  if (!pa) { alert('Please enter a UPI ID first.'); return; }
+
+  let base = `upi://pay?pa=${pa}&pn=${pn}&tn=${tn}&cu=INR`;
+  if (amt) base += `&am=${amt}`;
+
+  // App-specific deep links
+  const links = {
+    gpay:    `tez://upi/pay?pa=${pa}&pn=${pn}&tn=${tn}&cu=INR${amt?'&am='+amt:''}`,
+    phonepe: `phonepe://pay?pa=${pa}&pn=${pn}&tn=${tn}&cu=INR${amt?'&am='+amt:''}`,
+    paytm:   `paytmmp://pay?pa=${pa}&pn=${pn}&tn=${tn}&cu=INR${amt?'&am='+amt:''}`,
+    bhim:    base,
+  };
+
+  // Try app deep link, fall back to standard UPI
+  const a = document.createElement('a');
+  a.href = links[app] || base;
+  a.click();
+}
+
+// ════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════
 function init() {
-  // Invoice number
-  let cnt = 1;
-  try { cnt = parseInt(localStorage.getItem('invPro_count') || '1'); } catch(e){}
-  document.getElementById('invNum').value = 'INV-' + String(cnt).padStart(4,'0');
+  // Invoice number counter from storage
+  try {
+    const cnt = parseInt(localStorage.getItem('invPro_count') || '1');
+    document.getElementById('invCounter').value = cnt;
+  } catch(e){}
+  refreshInvNum();
 
   // Dates
   const today = new Date();
@@ -1525,22 +1858,34 @@ function upd() {
     ptbody.appendChild(tr);
   });
 
-  // Taxes
+  // Overall discount
+  const overallDiscAmt = parseFloat(document.getElementById('overallDiscAmt').value) || 0;
+  const overallDiscPct = parseFloat(document.getElementById('overallDiscPct').value) || 0;
+  const afterDiscount = Math.max(0, subtotal - overallDiscAmt);
+  document.getElementById('overallDiscDisplay').textContent = cur + overallDiscAmt.toFixed(2);
+  document.getElementById('overallDiscCur').textContent = cur;
+
+  // Taxes (applied after overall discount)
   const taxRowEls = document.querySelectorAll('#taxRows .tax-row');
   const totBody = document.getElementById('pTotalsBody');
   totBody.innerHTML = `<tr><td>Subtotal</td><td>${cur}${subtotal.toFixed(2)}</td></tr>`;
-  let totalTax = 0;
 
+  if (overallDiscAmt > 0) {
+    totBody.innerHTML += `<tr><td style="color:#e05c5c">Overall Discount (${overallDiscPct > 0 ? overallDiscPct + '%' : 'flat'})</td><td style="color:#e05c5c">−${cur}${overallDiscAmt.toFixed(2)}</td></tr>`;
+    totBody.innerHTML += `<tr><td>After Discount</td><td>${cur}${afterDiscount.toFixed(2)}</td></tr>`;
+  }
+
+  let totalTax = 0;
   taxRowEls.forEach(row => {
     const [nameIn, pctIn] = row.querySelectorAll('input');
     const taxName = nameIn.value.trim() || 'Tax';
     const taxPct = parseFloat(pctIn.value) || 0;
-    const taxAmt = subtotal * taxPct / 100;
+    const taxAmt = afterDiscount * taxPct / 100;
     totalTax += taxAmt;
     totBody.innerHTML += `<tr><td>${taxName} (${taxPct}%)</td><td>${cur}${taxAmt.toFixed(2)}</td></tr>`;
   });
 
-  const grand = subtotal + totalTax;
+  const grand = afterDiscount + totalTax;
   document.getElementById('pGrand').textContent = cur + grand.toFixed(2);
 
   // Notes
@@ -1585,15 +1930,18 @@ function upd() {
 
   // QR
   const showQRCheck = document.getElementById('showQRCheck').checked;
+  const showQRLabel = document.getElementById('showQRLabel')?.checked !== false;
   const qrContent = document.getElementById('qrContent').value.trim();
   const qrWrap = document.getElementById('pQRWrap');
   const pQR = document.getElementById('pQR');
+  const pQRLabel = document.getElementById('pQRLabel');
   if (showQRCheck && qrContent) {
     qrWrap.style.display = 'block';
     pQR.innerHTML = '';
     try {
-      new QRCode(pQR, { text: qrContent, width: 56, height: 56, correctLevel: QRCode.CorrectLevel.M });
+      new QRCode(pQR, { text: qrContent, width: 60, height: 60, correctLevel: QRCode.CorrectLevel.M });
     } catch(e) {}
+    if (pQRLabel) pQRLabel.style.display = showQRLabel ? 'block' : 'none';
   } else {
     qrWrap.style.display = 'none';
   }
@@ -1612,6 +1960,35 @@ function fmtDate(str) {
 }
 
 // ════════════════════════════════════════════
+// OVERALL DISCOUNT SYNC
+// ════════════════════════════════════════════
+function syncOverallDisc(changedField) {
+  // Get current subtotal from items
+  let subtotal = 0;
+  document.querySelectorAll('#itemsBody tr').forEach(row => {
+    const inputs = row.querySelectorAll('input[type="text"], input[type="number"]');
+    const discType = row.dataset.discType || 'flat';
+    const qty   = parseFloat(inputs[1]?.value) || 0;
+    const price = parseFloat(inputs[2]?.value) || 0;
+    const dv    = parseFloat(inputs[3]?.value) || 0;
+    const discAmt = discType === 'pct' ? (qty * price * dv / 100) : dv;
+    subtotal += Math.max(0, qty * price - discAmt);
+  });
+
+  const pctEl = document.getElementById('overallDiscPct');
+  const amtEl = document.getElementById('overallDiscAmt');
+
+  if (changedField === 'pct') {
+    const pct = parseFloat(pctEl.value) || 0;
+    amtEl.value = (subtotal * pct / 100).toFixed(2);
+  } else {
+    const amt = parseFloat(amtEl.value) || 0;
+    pctEl.value = subtotal > 0 ? ((amt / subtotal) * 100).toFixed(2) : '0';
+  }
+  upd();
+}
+
+// ════════════════════════════════════════════
 // PDF DOWNLOAD
 // ════════════════════════════════════════════
 function downloadPDF() {
@@ -1626,8 +2003,11 @@ function downloadPDF() {
   });
   // Increment invoice counter
   try {
-    let cnt = parseInt(localStorage.getItem('invPro_count') || '1');
-    localStorage.setItem('invPro_count', cnt + 1);
+    const counterEl = document.getElementById('invCounter');
+    const next = (parseInt(counterEl.value) || 1) + 1;
+    counterEl.value = next;
+    localStorage.setItem('invPro_count', next);
+    refreshInvNum();
   } catch(e){}
 }
 
