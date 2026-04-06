@@ -96,7 +96,8 @@ InvoicePro/
 - [ ] ☁️ Cloud storage for saved invoices
 - [ ] 📊 Analytics dashboard
 - [ ] 🌍 Multi-language support
-- [ ] 🎨 Custom invoice themes
+- [x] 🎨 Custom invoice themes
+- [x] 💵 UPI integration
 
 ---
 
